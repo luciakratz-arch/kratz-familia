@@ -282,12 +282,21 @@ main{max-width:600px;margin:0 auto;padding:1rem;}
     <div class="f"><label>Nome</label><input type="text" id="mm-nome" placeholder="Nome completo"/></div>
     <div class="f"><label>Cor</label>
       <select id="mm-cor">
-        <option value="#7B00C4|#EEEDFE|#3C3489">Roxo</option>
-        <option value="#1D9E75|#E1F5EE|#085041">Verde</option>
-        <option value="#D85A30|#FAECE7|#712B13">Coral</option>
-        <option value="#D4537E|#FBEAF0|#72243E">Rosa</option>
-        <option value="#BA7517|#FAEEDA|#633806">Âmbar</option>
-        <option value="#378ADD|#E6F1FB|#0C447C">Azul</option>
+        <option value="#0891B2|#CFFAFE|#0E7490">Ciano</option>
+        <option value="#0D9488|#CCFBF1|#0F766E">Esmeralda</option>
+        <option value="#7C3AED|#EDE9FE|#5B21B6">Violeta</option>
+        <option value="#DB2777|#FCE7F3|#9D174D">Cereja</option>
+        <option value="#EA580C|#FFEDD5|#9A3412">Laranja</option>
+        <option value="#65A30D|#ECFCCB|#3F6212">Lima</option>
+        <option value="#0369A1|#E0F2FE|#075985">Azul marinho</option>
+        <option value="#B45309|#FEF3C7|#78350F">Dourado</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Participa da escala de domingos?</label>
+      <select id="mm-escala">
+        <option value="sim">Sim — entra na rotação</option>
+        <option value="nao">Não — só acompanha consultas</option>
       </select>
     </div>
     <div class="mbtns">
@@ -301,8 +310,8 @@ main{max-width:600px;margin:0 auto;padding:1rem;}
 
 <script>
 var members=[
-  {id:'m1',name:'Marta',   color:'#7B00C4',bg:'#EEEDFE',tc:'#3C3489'},
-  {id:'m2',name:'Lúcia',   color:'#1D9E75',bg:'#E1F5EE',tc:'#085041'},
+  {id:'m1',name:'Marta',   color:'#1D9E75',bg:'#E1F5EE',tc:'#085041'},
+  {id:'m2',name:'Lúcia',   color:'#7B00C4',bg:'#EEEDFE',tc:'#3C3489'},
   {id:'m3',name:'Ricardo', color:'#D85A30',bg:'#FAECE7',tc:'#712B13'},
   {id:'m4',name:'Ray',     color:'#D4537E',bg:'#FBEAF0',tc:'#72243E'},
   {id:'m5',name:'Arthur',  color:'#BA7517',bg:'#FAEEDA',tc:'#633806'}
@@ -331,7 +340,7 @@ function gm(name){return members.find(function(m){return m.name===name;})||{colo
 
 function buildSched(){
   if(!members.length){sched=[];return;}
-  var seq=members.map(function(m){return m.name;});
+  var seq=members.filter(function(m){return m.escala===undefined||m.escala===true;}).map(function(m){return m.name;});
   sched=[];
   var base=new Date(2026,0,4);
   var d=new Date(2024,0,7);
@@ -641,10 +650,12 @@ function renderMem(){
   el.innerHTML=members.map(function(m,i){
     var init=m.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
     var my=sched.filter(function(s){return s.member===m.name&&s.date>=today;}).slice(0,12).length;
+    var escalaBadge=m.escala===false?'<div style="font-size:11px;color:#aaa;margin-top:2px;">só consultas</div>':'<div style="font-size:11px;color:#085041;margin-top:2px;">✓ escala dom.</div>';
     return '<div class="mcard">'+
       '<div class="mav" style="background:'+m.bg+';color:'+m.tc+';">'+init+'</div>'+
       '<div class="mname">'+m.name+'</div>'+
-      '<div class="minfo">'+(i+1)+'º · '+my+' dom. próx.</div>'+
+      escalaBadge+
+      '<div class="minfo">'+(my>0?my+' dom. próx.':'')+ '</div>'+
       '<button class="btn-d" style="margin-top:10px;width:100%;" onclick="delMem(\''+m.id+'\')">remover</button>'+
     '</div>';
   }).join('');
@@ -788,8 +799,9 @@ saveMem = function(){
   var nome=document.getElementById('mm-nome').value.trim();
   if(!nome){toast('Informe o nome.');return;}
   var cv=document.getElementById('mm-cor').value.split('|');
+  var escala=document.getElementById('mm-escala').value==='sim';
   var nr=push(ref(db,'membros'));
-  set(nr,{name:nome,color:cv[0],bg:cv[1],tc:cv[2],order:members.length});
+  set(nr,{name:nome,color:cv[0],bg:cv[1],tc:cv[2],order:members.length,escala:escala});
   document.getElementById('mm-nome').value='';
   closeM('m-mem');
   toast('Membro adicionado!');
@@ -807,11 +819,11 @@ setTimeout(async function(){
   var snap = await get(ref(db,'membros'));
   if(!snap.exists()){
     var inicial=[
-      {name:'Marta',   color:'#7B00C4',bg:'#EEEDFE',tc:'#3C3489',order:0},
-      {name:'Lúcia',   color:'#1D9E75',bg:'#E1F5EE',tc:'#085041',order:1},
-      {name:'Ricardo', color:'#D85A30',bg:'#FAECE7',tc:'#712B13',order:2},
-      {name:'Ray',     color:'#D4537E',bg:'#FBEAF0',tc:'#72243E',order:3},
-      {name:'Arthur',  color:'#BA7517',bg:'#FAEEDA',tc:'#633806',order:4},
+      {name:'Marta',   color:'#1D9E75',bg:'#E1F5EE',tc:'#085041',order:0,escala:true},
+      {name:'Lúcia',   color:'#7B00C4',bg:'#EEEDFE',tc:'#3C3489',order:1,escala:true},
+      {name:'Ricardo', color:'#D85A30',bg:'#FAECE7',tc:'#712B13',order:2,escala:true},
+      {name:'Ray',     color:'#D4537E',bg:'#FBEAF0',tc:'#72243E',order:3,escala:true},
+      {name:'Arthur',  color:'#BA7517',bg:'#FAEEDA',tc:'#633806',order:4,escala:true},
     ];
     for(var m of inicial){ var r=push(ref(db,'membros')); await set(r,m); }
   }
