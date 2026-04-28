@@ -595,12 +595,12 @@ function renderSau(){
     if(r.acomp) meta+=(meta?' · ':'')+'Acomp.: '+r.acomp;
     if(r.por) meta+=(meta?' · ':'')+'por '+r.por;
     var acts='<div class="si-act">'+
-      (isAppt(r)?'<select class="ssel" onchange="setSt(\''+r.id+'\',this.value)">'+
+      (isAppt(r)?'<select class="ssel" onchange="setSt(\''+r._key+'\',this.value)">'+
         '<option value="agendada"'+(r.status==='agendada'?' selected':'')+'>agendada</option>'+
         '<option value="realizada"'+(r.status==='realizada'?' selected':'')+'>realizada</option>'+
         '<option value="cancelada"'+(r.status==='cancelada'?' selected':'')+'>cancelada</option>'+
       '</select>':'')+
-      '<button class="btn-d" onclick="delSau(\''+r.id+'\')">remover</button></div>';
+      '<button class="btn-d" onclick="delSau(\''+r._key+'\')">remover</button></div>';
     return '<div class="si">'+
       '<div class="si-top">'+
         '<div style="flex:1;min-width:0;">'+
@@ -617,7 +617,7 @@ function renderSau(){
   }).join('');
 }
 
-function setSt(id,v){var r=saude.find(function(x){return x.id===id;});if(r){r.status=v;renderSau();}}
+function setSt(id,v){var r=saude.find(function(x){return x._key===id;});if(r){r.status=v;renderSau();}}
 function delSau(id){saude=saude.filter(function(x){return x.id!==id;});renderSau();renderCal();toast('Removido.');}
 
 function saveSau(){
@@ -789,6 +789,8 @@ delSau = function(id){
   remove(ref(db,'saude/'+id));
   toast('Removido.');
 };
+
+
 
 setSt = function(id,v){
   set(ref(db,'saude/'+id+'/status'),v);
