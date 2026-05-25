@@ -893,44 +893,73 @@ function verificarLembretesHoje(){
 
 // Botão de notificação no header
 function adicionarBotaoNotificacao(){
+  if(!('Notification' in window)) return;
   var hdr = document.querySelector('.hdr');
-  if(!hdr || !('Notification' in window)) return;
+  if(!hdr) return;
+
   var btn = document.createElement('button');
   btn.id = 'btn-notif';
-  btn.style.cssText = 'background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;margin-top:8px;font-family:DM Sans,sans-serif;';
-  btn.onclick = function(){
-    if(Notification.permission === 'granted'){
-      verificarLembretesHoje();
-      toast('Lembretes verificados!');
-    } else {
-      Notification.requestPermission().then(function(p){
-        if(p==='granted'){ verificarLembretesHoje(); toast('Notificações ativadas!'); }
-        else toast('Permissão negada.');
-      });
-    }
-    atualizarBotaoNotif();
-  };
-  atualizarBotaoNotifEl(btn);
+  btn.style.cssText = 'border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;margin-top:8px;font-family:DM Sans,sans-serif;';
   hdr.appendChild(btn);
+  atualizarBotaoNotif();
+
+  btn.onclick = function(){
+    var ativo = localStorage.getItem('notif') === 'on';
+    if(ativo){
+      localStorage.setItem('notif','off');
+      atualizarBotaoNotif();
+      toast('Lembretes desativados.');
+    } else {
+      if(Notification.permission === 'granted'){
+        localStorage.setItem('notif','on');
+        verificarLembretesHoje();
+        atualizarBotaoNotif();
+        toast('Lembretes ativados!');
+      } else if(Notification.permission === 'denied'){
+        toast('Notificações bloqueadas no navegador. Ative nas configurações do celular.');
+      } else {
+        Notification.requestPermission().then(function(p){
+          if(p==='granted'){
+            localStorage.setItem('notif','on');
+            verificarLembretesHoje();
+            atualizarBotaoNotif();
+            toast('Lembretes ativados!');
+          } else {
+            toast('Permissão negada.');
+          }
+        });
+      }
+    }
+  };
+
+  // Pergunta na primeira vez
+  if(!localStorage.getItem('notif') && Notification.permission === 'default'){
+    setTimeout(function(){
+      if(confirm('Deseja ativar lembretes de domingos e consultas?')){
+        Notification.requestPermission().then(function(p){
+          if(p==='granted'){
+            localStorage.setItem('notif','on');
+            verificarLembretesHoje();
+            atualizarBotaoNotif();
+          } else {
+            localStorage.setItem('notif','off');
+            atualizarBotaoNotif();
+          }
+        });
+      } else {
+        localStorage.setItem('notif','off');
+        atualizarBotaoNotif();
+      }
+    }, 1500);
+  }
 }
 
 function atualizarBotaoNotif(){
   var btn = document.getElementById('btn-notif');
-  if(btn) atualizarBotaoNotifEl(btn);
-}
-
-function atualizarBotaoNotifEl(btn){
-  if(!('Notification' in window)) return;
-  if(Notification.permission === 'granted'){
-    btn.textContent = '🔔 Lembretes ativos';
-    btn.style.background = 'rgba(255,255,255,0.25)';
-  } else if(Notification.permission === 'denied'){
-    btn.textContent = '🔕 Notificações bloqueadas';
-    btn.style.background = 'rgba(255,0,0,0.2)';
-  } else {
-    btn.textContent = '🔔 Ativar lembretes';
-    btn.style.background = 'rgba(255,255,255,0.15)';
-  }
+  if(!btn) return;
+  var ativo = localStorage.getItem('notif')==='on' && Notification.permission==='granted';
+  btn.textContent = ativo ? '🔔 Desativar lembretes' : '🔕 Ativar lembretes';
+  btn.style.background = ativo ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)';
 }
 
 // INIT
