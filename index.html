@@ -831,8 +831,114 @@ setTimeout(async function(){
   }
 }, 1000);
 
+// ---- NOTIFICAÇÕES ----
+function pedirPermissaoNotificacao(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+function enviarNotificacao(titulo, corpo){
+  if(Notification.permission === 'granted'){
+    new Notification(titulo, {
+      body: corpo,
+      icon: 'https://luciakratz-arch.github.io/kratz-familia/icon.png'
+    });
+  }
+}
+
+function verificarLembretesHoje(){
+  if(Notification.permission !== 'granted') return;
+  buildSched();
+  var hoje = new Date(); hoje.setHours(0,0,0,0);
+  var hojeFmt = fD(hoje);
+
+  // Verificar domingo de hoje
+  var domHoje = sched.find(function(s){ return fD(s.date) === hojeFmt; });
+  if(domHoje){
+    enviarNotificacao(
+      '🗓 Domingo de acompanhamento',
+      domHoje.member + ', hoje é seu dia com Fernando Luiz e Ana Christina Kratz!'
+    );
+  }
+
+  // Verificar consultas de hoje
+  saude.filter(function(r){
+    return r.data === hojeFmt && (r.tipo==='cons'||r.tipo==='exam'||r.tipo==='fisio') && r.status==='agendada';
+  }).forEach(function(r){
+    var msg = r.desc + (r.hora?' às '+r.hora:'') + (r.local?' · '+r.local:'');
+    enviarNotificacao('🏥 ' + (r.tipo==='cons'?'Consulta':r.tipo==='exam'?'Exame':'Fisioterapia') + ' hoje', msg);
+  });
+
+  // Verificar lembretes 1 dia antes
+  var amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
+  var amanhaFmt = fD(amanha);
+
+  var domAmanha = sched.find(function(s){ return fD(s.date) === amanhaFmt; });
+  if(domAmanha){
+    enviarNotificacao(
+      '🗓 Lembrete — amanhã é domingo',
+      domAmanha.member + ', amanhã é seu dia com Fernando Luiz e Ana Christina!'
+    );
+  }
+
+  saude.filter(function(r){
+    return r.data === amanhaFmt && (r.tipo==='cons'||r.tipo==='exam'||r.tipo==='fisio') && r.status==='agendada';
+  }).forEach(function(r){
+    var msg = r.desc + (r.hora?' às '+r.hora:'') + (r.local?' · '+r.local:'');
+    enviarNotificacao('🏥 Lembrete — amanhã', msg);
+  });
+}
+
+// Botão de notificação no header
+function adicionarBotaoNotificacao(){
+  var hdr = document.querySelector('.hdr');
+  if(!hdr || !('Notification' in window)) return;
+  var btn = document.createElement('button');
+  btn.id = 'btn-notif';
+  btn.style.cssText = 'background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;margin-top:8px;font-family:DM Sans,sans-serif;';
+  btn.onclick = function(){
+    if(Notification.permission === 'granted'){
+      verificarLembretesHoje();
+      toast('Lembretes verificados!');
+    } else {
+      Notification.requestPermission().then(function(p){
+        if(p==='granted'){ verificarLembretesHoje(); toast('Notificações ativadas!'); }
+        else toast('Permissão negada.');
+      });
+    }
+    atualizarBotaoNotif();
+  };
+  atualizarBotaoNotifEl(btn);
+  hdr.appendChild(btn);
+}
+
+function atualizarBotaoNotif(){
+  var btn = document.getElementById('btn-notif');
+  if(btn) atualizarBotaoNotifEl(btn);
+}
+
+function atualizarBotaoNotifEl(btn){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'granted'){
+    btn.textContent = '🔔 Lembretes ativos';
+    btn.style.background = 'rgba(255,255,255,0.25)';
+  } else if(Notification.permission === 'denied'){
+    btn.textContent = '🔕 Notificações bloqueadas';
+    btn.style.background = 'rgba(255,0,0,0.2)';
+  } else {
+    btn.textContent = '🔔 Ativar lembretes';
+    btn.style.background = 'rgba(255,255,255,0.15)';
+  }
+}
+
 // INIT
 initCal();initDom();buildSched();buildDomSel();renderMem();renderCal();
+adicionarBotaoNotificacao();
+pedirPermissaoNotificacao();
+// Verifica lembretes 3 segundos após carregar (aguarda Firebase carregar dados)
+setTimeout(verificarLembretesHoje, 3000);
 </script>
 </body>
 </html>
