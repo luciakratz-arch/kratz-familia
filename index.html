@@ -850,6 +850,7 @@ function enviarNotificacao(titulo, corpo){
 
 function verificarLembretesHoje(){
   if(Notification.permission !== 'granted') return;
+  if(localStorage.getItem('notif') !== 'on') return;
   buildSched();
   var hoje = new Date(); hoje.setHours(0,0,0,0);
   var hojeFmt = fD(hoje);
