@@ -159,14 +159,10 @@ main{max-width:600px;margin:0 auto;padding:1rem;}
   </div>
   <div class="cal-grid" id="cal-dn"></div>
   <div class="cal-grid" id="cal-cells"></div>
-
-  <!-- Detalhe do dia clicado -->
   <div class="day-box" id="day-box">
     <h3 id="day-title"></h3>
     <div id="day-content"></div>
   </div>
-
-  <!-- Lista consolidada do mês -->
   <div class="mes-card">
     <div class="mes-title" id="mes-title"></div>
     <div id="mes-list"></div>
@@ -176,17 +172,13 @@ main{max-width:600px;margin:0 auto;padding:1rem;}
 <!-- ========== DOMINGOS ========== -->
 <div id="sec-dom" class="sec">
   <div id="dom-banner"></div>
-
   <div class="dom-ctrl">
     <button onclick="chDomY(-1)">‹</button>
     <select id="dom-ys" onchange="onDomSel()"></select>
     <button onclick="chDomY(1)">›</button>
   </div>
-
   <div class="mleg" id="dom-mleg"></div>
-
   <button class="btn-troca" onclick="openM('m-troca')">⇄ Solicitar troca de domingo</button>
-
   <div class="card">
     <div class="chdr">
       <span class="ctitle" id="dom-label"></span>
@@ -250,7 +242,12 @@ main{max-width:600px;margin:0 auto;padding:1rem;}
   <div class="modal">
     <h3>Novo registro de saúde</h3>
     <div class="f"><label>Paciente</label>
-      <select id="s-quem"><option>Fernando Luiz Kratz</option><option>Ana Christina Kratz</option><option>Ambos</option></select>
+      <!-- Fernando e Ana Christina sempre presentes, pois são os idosos -->
+      <select id="s-quem">
+        <option value="Fernando Luiz Kratz">Fernando Luiz Kratz</option>
+        <option value="Ana Christina Kratz">Ana Christina Kratz</option>
+        <option value="Ambos">Ambos</option>
+      </select>
     </div>
     <div class="f"><label>Tipo</label>
       <select id="s-tipo">
@@ -309,14 +306,7 @@ main{max-width:600px;margin:0 auto;padding:1rem;}
 <div class="toast" id="toast"></div>
 
 <script>
-var members=[
-  {id:'m1',name:'Marta',   color:'#1D9E75',bg:'#E1F5EE',tc:'#085041'},
-  {id:'m2',name:'Lúcia',   color:'#7B00C4',bg:'#EEEDFE',tc:'#3C3489'},
-  {id:'m3',name:'Ricardo', color:'#D85A30',bg:'#FAECE7',tc:'#712B13'},
-  {id:'m4',name:'Ray',     color:'#D4537E',bg:'#FBEAF0',tc:'#72243E'},
-  {id:'m5',name:'Arthur',  color:'#BA7517',bg:'#FAEEDA',tc:'#633806'}
-];
-var trocas=[],saude=[],sched=[];
+var members=[],trocas=[],saude=[],sched=[];
 var nid=10,calY,calM,domY,domMF='';
 var MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 var DN=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -341,6 +331,7 @@ function gm(name){return members.find(function(m){return m.name===name;})||{colo
 function buildSched(){
   if(!members.length){sched=[];return;}
   var seq=members.filter(function(m){return m.escala===undefined||m.escala===true;}).map(function(m){return m.name;});
+  if(!seq.length){sched=[];return;}
   sched=[];
   var base=new Date(2026,0,4);
   var d=new Date(2024,0,7);
@@ -373,7 +364,6 @@ function renderCal(){
   buildSched();
   document.getElementById('cal-title').textContent=MN[calM]+' '+calY;
   document.getElementById('cal-dn').innerHTML=DN.map(function(d){return '<div class="cdn">'+d+'</div>';}).join('');
-
   var today=new Date();today.setHours(0,0,0,0);
   var first=new Date(calY,calM,1);
   var days=new Date(calY,calM+1,0).getDate();
@@ -427,16 +417,12 @@ function showDay(dts){
 }
 
 function renderMesList(){
-  // Lista consolidada do mês: domingos + saúde, só do mês/ano atual
   var tl={cons:'Consulta',exam:'Exame',fisio:'Fisioterapia',med:'Medicamento',obs:'Observação'};
   var tc={cons:'#378ADD',exam:'#378ADD',fisio:'#378ADD',med:'#BA7517',obs:'#1D9E75'};
   document.getElementById('mes-title').textContent=MN[calM]+' '+calY+' — eventos';
-
   var items=[];
   var today=new Date();today.setHours(0,0,0,0);
   var proxSched=sched.find(function(x){return x.date>=today;});
-
-  // Domingos do mês
   sched.filter(function(s){
     return s.date.getFullYear()===calY && s.date.getMonth()===calM;
   }).forEach(function(s){
@@ -452,8 +438,6 @@ function renderMesList(){
       '</div>'
     });
   });
-
-  // Saúde do mês
   saude.filter(function(r){
     if(!r.data) return false;
     var p=r.data.split('/');
@@ -472,7 +456,6 @@ function renderMesList(){
       '</div>'
     });
   });
-
   items.sort(function(a,b){return a.ts-b.ts;});
   document.getElementById('mes-list').innerHTML=items.length
     ? items.map(function(i){return i.html;}).join('')
@@ -495,7 +478,6 @@ function renderDom(){
   buildSched();
   var today=new Date();today.setHours(0,0,0,0);
   var prox=sched.find(function(s){return s.date>=today;});
-  var pm=prox?gm(prox.member):{color:'#2C2C2A'};
 
   document.getElementById('dom-banner').innerHTML=prox?
     '<div class="banner" style="background:#2C2C2A;">'+
@@ -503,18 +485,15 @@ function renderDom(){
       '<svg width="36" height="36" viewBox="0 0 36 36" fill="none" style="opacity:.3"><rect x="2" y="6" width="32" height="24" rx="4" stroke="white" stroke-width="2"/><line x1="2" y1="14" x2="34" y2="14" stroke="white" stroke-width="2"/><line x1="11" y1="2" x2="11" y2="10" stroke="white" stroke-width="2"/><line x1="25" y1="2" x2="25" y2="10" stroke="white" stroke-width="2"/></svg>'+
     '</div>':'';
 
-  // Filtros por membro
   document.getElementById('dom-mleg').innerHTML=
     '<span class="mpill'+(domMF===''?'':' off')+'" style="background:#f1f0ec;color:#2C2C2A;border-color:'+(domMF===''?'#2C2C2A':'transparent')+';" onclick="setDomF(\'\')">Todos</span>'+
-    members.map(function(m){
+    members.filter(function(m){return m.escala===undefined||m.escala===true;}).map(function(m){
       var a=domMF===m.name;
       return '<span class="mpill'+(a?'':' off')+'" style="background:'+m.bg+';color:'+m.tc+';border-color:'+(a?'#BA7517':'transparent')+';" onclick="setDomF(\''+m.name+'\')">'+m.name+'</span>';
     }).join('');
 
-  // Lista do ano inteiro agrupada por mês
   var ms=sched.filter(function(s){return s.date.getFullYear()===domY;});
   if(domMF) ms=ms.filter(function(s){return s.member===domMF;});
-
   document.getElementById('dom-label').textContent=(domMF?domMF+' — ':'Todos — ')+domY;
 
   var byM={};
@@ -534,11 +513,11 @@ function renderDom(){
   });
   document.getElementById('dom-list').innerHTML=html||'<div class="empty">Nenhum domingo encontrado.</div>';
 
-  // Selects do modal de troca
   var upcoming=sched.filter(function(s){return s.date>=today;}).slice(0,20);
   var de=document.getElementById('tr-de'),co=document.getElementById('tr-com');
   if(de) de.innerHTML=upcoming.map(function(s){return '<option value="'+fD(s.date)+'">'+fS(s.date)+' — '+s.member+'</option>';}).join('');
-  if(co) co.innerHTML=members.map(function(m){return '<option>'+m.name+'</option>';}).join('');
+  var escalaM=members.filter(function(m){return m.escala===undefined||m.escala===true;});
+  if(co) co.innerHTML=escalaM.map(function(m){return '<option>'+m.name+'</option>';}).join('');
   updTrPara();
 }
 
@@ -576,7 +555,7 @@ function renderSau(){
     '<div class="scard"><div class="sv">'+obs+'</div><div class="sl">Observações</div></div>';
 
   var filtered=saude.slice();
-  if(fm) filtered=filtered.filter(function(r){return r.por===fm||r.acomp===fm;});
+  if(fm) filtered=filtered.filter(function(r){return r.quem===fm||r.por===fm||r.acomp===fm;});
   if(ft) filtered=filtered.filter(function(r){return r.tipo===ft;});
 
   var el=document.getElementById('sau-list');
@@ -647,7 +626,7 @@ function renderMem(){
   var today=new Date();today.setHours(0,0,0,0);
   var el=document.getElementById('mem-grid');
   if(!members.length){el.innerHTML='<div class="empty" style="grid-column:1/-1">Nenhum membro.</div>';return;}
-  el.innerHTML=members.map(function(m,i){
+  el.innerHTML=members.map(function(m){
     var init=m.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
     var my=sched.filter(function(s){return s.member===m.name&&s.date>=today;}).slice(0,12).length;
     var escalaBadge=m.escala===false?'<div style="font-size:11px;color:#aaa;margin-top:2px;">só consultas</div>':'<div style="font-size:11px;color:#085041;margin-top:2px;">✓ escala dom.</div>';
@@ -655,14 +634,17 @@ function renderMem(){
       '<div class="mav" style="background:'+m.bg+';color:'+m.tc+';">'+init+'</div>'+
       '<div class="mname">'+m.name+'</div>'+
       escalaBadge+
-      '<div class="minfo">'+(my>0?my+' dom. próx.':'')+ '</div>'+
+      '<div class="minfo">'+(my>0?my+' dom. próx.':'')+'</div>'+
       '<button class="btn-d" style="margin-top:10px;width:100%;" onclick="delMem(\''+m.id+'\')">remover</button>'+
     '</div>';
   }).join('');
   // Atualiza selects de membros nos modais
   var opts=members.map(function(m){return '<option>'+m.name+'</option>';}).join('');
   var fm=document.getElementById('f-membro');
-  if(fm) fm.innerHTML='<option value="">Todos os membros</option>'+opts;
+  if(fm) fm.innerHTML='<option value="">Todos os membros</option>'+
+    '<option value="Fernando Luiz Kratz">Fernando Luiz Kratz</option>'+
+    '<option value="Ana Christina Kratz">Ana Christina Kratz</option>'+
+    opts;
   var sa=document.getElementById('s-acomp');if(sa) sa.innerHTML='<option value="">-- nenhum --</option>'+opts;
   var sp=document.getElementById('s-por');if(sp) sp.innerHTML=opts;
 }
@@ -671,7 +653,8 @@ function saveMem(){
   var nome=document.getElementById('mm-nome').value.trim();
   if(!nome){toast('Informe o nome.');return;}
   var cv=document.getElementById('mm-cor').value.split('|');
-  members.push({id:uid(),name:nome,color:cv[0],bg:cv[1],tc:cv[2]});
+  var escala=document.getElementById('mm-escala').value==='sim';
+  members.push({id:uid(),name:nome,color:cv[0],bg:cv[1],tc:cv[2],escala:escala});
   document.getElementById('mm-nome').value='';
   closeM('m-mem');renderMem();renderDom();renderCal();toast('Membro adicionado!');
 }
@@ -703,13 +686,12 @@ function toast(msg){
   t.textContent=msg;t.classList.add('on');
   setTimeout(function(){t.classList.remove('on');},2500);
 }
-
 </script>
 
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBjX5BoRRQTQRWqJw-MEsP_hZYZcHXTYt0",
@@ -728,7 +710,7 @@ const db = getDatabase(app);
 // ---- LISTENERS FIREBASE ----
 onValue(ref(db,'membros'), function(snap){
   members=[];
-  snap.forEach(function(c){ members.push({_key:c.key,...c.val()}); });
+  snap.forEach(function(c){ members.push({_key:c.key,id:c.key,...c.val()}); });
   members.sort(function(a,b){return (a.order||0)-(b.order||0);});
   renderMem(); renderCal(); buildDomSel(); renderDom();
 });
@@ -748,8 +730,6 @@ onValue(ref(db,'saude'), function(snap){
 
 // ---- SOBRESCREVE FUNÇÕES PARA SALVAR NO FIREBASE ----
 
-// Troca
-window._doTroca = window.doTroca;
 doTroca = function(){
   var de=document.getElementById('tr-de'),pa=document.getElementById('tr-para');
   if(!pa.value){toast('Selecione um domingo.');return;}
@@ -761,7 +741,6 @@ doTroca = function(){
   toast('Troca realizada!');
 };
 
-// Saúde
 saveSau = function(){
   var desc=document.getElementById('s-desc').value.trim();
   if(!desc){toast('Informe a descrição.');return;}
@@ -790,13 +769,10 @@ delSau = function(id){
   toast('Removido.');
 };
 
-
-
 setSt = function(id,v){
   set(ref(db,'saude/'+id+'/status'),v);
 };
 
-// Membros
 saveMem = function(){
   var nome=document.getElementById('mm-nome').value.trim();
   if(!nome){toast('Informe o nome.');return;}
@@ -815,8 +791,9 @@ delMem = function(id){
   toast('Membro removido.');
 };
 
-// Seed membros iniciais se banco vazio
-import { get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+// ---- SEED: só roda se o banco estiver COMPLETAMENTE vazio ----
+// Inclui todos os 6 membros da escala. Fernando e Ana Christina NÃO entram
+// aqui pois são os idosos acompanhados, não filhos/cuidadores da escala.
 setTimeout(async function(){
   var snap = await get(ref(db,'membros'));
   if(!snap.exists()){
@@ -826,25 +803,22 @@ setTimeout(async function(){
       {name:'Ricardo', color:'#D85A30',bg:'#FAECE7',tc:'#712B13',order:2,escala:true},
       {name:'Ray',     color:'#D4537E',bg:'#FBEAF0',tc:'#72243E',order:3,escala:true},
       {name:'Arthur',  color:'#BA7517',bg:'#FAEEDA',tc:'#633806',order:4,escala:true},
+      {name:'Elza',    color:'#0369A1',bg:'#E0F2FE',tc:'#075985',order:5,escala:true},
     ];
     for(var m of inicial){ var r=push(ref(db,'membros')); await set(r,m); }
+    toast('Membros iniciais criados!');
   }
-}, 1000);
+}, 1500);
 
 // ---- NOTIFICAÇÕES ----
 function pedirPermissaoNotificacao(){
   if(!('Notification' in window)) return;
-  if(Notification.permission === 'default'){
-    Notification.requestPermission();
-  }
+  if(Notification.permission === 'default') Notification.requestPermission();
 }
 
 function enviarNotificacao(titulo, corpo){
   if(Notification.permission === 'granted'){
-    new Notification(titulo, {
-      body: corpo,
-      icon: 'https://luciakratz-arch.github.io/kratz-familia/icon.png'
-    });
+    new Notification(titulo, {body: corpo, icon: 'https://luciakratz-arch.github.io/kratz-familia/icon.png'});
   }
 }
 
@@ -854,56 +828,33 @@ function verificarLembretesHoje(){
   buildSched();
   var hoje = new Date(); hoje.setHours(0,0,0,0);
   var hojeFmt = fD(hoje);
-
-  // Verificar domingo de hoje
   var domHoje = sched.find(function(s){ return fD(s.date) === hojeFmt; });
-  if(domHoje){
-    enviarNotificacao(
-      '🗓 Domingo de acompanhamento',
-      domHoje.member + ', hoje é seu dia com Fernando Luiz e Ana Christina Kratz!'
-    );
-  }
-
-  // Verificar consultas de hoje
+  if(domHoje) enviarNotificacao('🗓 Domingo de acompanhamento', domHoje.member + ', hoje é seu dia com Fernando Luiz e Ana Christina Kratz!');
   saude.filter(function(r){
     return r.data === hojeFmt && (r.tipo==='cons'||r.tipo==='exam'||r.tipo==='fisio') && r.status==='agendada';
   }).forEach(function(r){
-    var msg = r.desc + (r.hora?' às '+r.hora:'') + (r.local?' · '+r.local:'');
-    enviarNotificacao('🏥 ' + (r.tipo==='cons'?'Consulta':r.tipo==='exam'?'Exame':'Fisioterapia') + ' hoje', msg);
+    enviarNotificacao('🏥 '+(r.tipo==='cons'?'Consulta':r.tipo==='exam'?'Exame':'Fisioterapia')+' hoje', r.desc+(r.hora?' às '+r.hora:'')+(r.local?' · '+r.local:''));
   });
-
-  // Verificar lembretes 1 dia antes
   var amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
   var amanhaFmt = fD(amanha);
-
   var domAmanha = sched.find(function(s){ return fD(s.date) === amanhaFmt; });
-  if(domAmanha){
-    enviarNotificacao(
-      '🗓 Lembrete — amanhã é domingo',
-      domAmanha.member + ', amanhã é seu dia com Fernando Luiz e Ana Christina!'
-    );
-  }
-
+  if(domAmanha) enviarNotificacao('🗓 Lembrete — amanhã é domingo', domAmanha.member+', amanhã é seu dia com Fernando Luiz e Ana Christina!');
   saude.filter(function(r){
     return r.data === amanhaFmt && (r.tipo==='cons'||r.tipo==='exam'||r.tipo==='fisio') && r.status==='agendada';
   }).forEach(function(r){
-    var msg = r.desc + (r.hora?' às '+r.hora:'') + (r.local?' · '+r.local:'');
-    enviarNotificacao('🏥 Lembrete — amanhã', msg);
+    enviarNotificacao('🏥 Lembrete — amanhã', r.desc+(r.hora?' às '+r.hora:'')+(r.local?' · '+r.local:''));
   });
 }
 
-// Botão de notificação no header
 function adicionarBotaoNotificacao(){
   if(!('Notification' in window)) return;
   var hdr = document.querySelector('.hdr');
   if(!hdr) return;
-
   var btn = document.createElement('button');
   btn.id = 'btn-notif';
-  btn.style.cssText = 'border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;margin-top:8px;font-family:DM Sans,sans-serif;';
+  btn.style.cssText = 'border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;margin-top:8px;font-family:DM Sans,sans-serif;background:rgba(255,255,255,0.1);';
   hdr.appendChild(btn);
   atualizarBotaoNotif();
-
   btn.onclick = function(){
     var ativo = localStorage.getItem('notif') === 'on';
     if(ativo){
@@ -917,40 +868,23 @@ function adicionarBotaoNotificacao(){
         atualizarBotaoNotif();
         toast('Lembretes ativados!');
       } else if(Notification.permission === 'denied'){
-        toast('Notificações bloqueadas no navegador. Ative nas configurações do celular.');
+        toast('Notificações bloqueadas no navegador.');
       } else {
         Notification.requestPermission().then(function(p){
-          if(p==='granted'){
-            localStorage.setItem('notif','on');
-            verificarLembretesHoje();
-            atualizarBotaoNotif();
-            toast('Lembretes ativados!');
-          } else {
-            toast('Permissão negada.');
-          }
+          if(p==='granted'){localStorage.setItem('notif','on');verificarLembretesHoje();atualizarBotaoNotif();toast('Lembretes ativados!');}
+          else toast('Permissão negada.');
         });
       }
     }
   };
-
-  // Pergunta na primeira vez
   if(!localStorage.getItem('notif') && Notification.permission === 'default'){
     setTimeout(function(){
       if(confirm('Deseja ativar lembretes de domingos e consultas?')){
         Notification.requestPermission().then(function(p){
-          if(p==='granted'){
-            localStorage.setItem('notif','on');
-            verificarLembretesHoje();
-            atualizarBotaoNotif();
-          } else {
-            localStorage.setItem('notif','off');
-            atualizarBotaoNotif();
-          }
+          if(p==='granted'){localStorage.setItem('notif','on');verificarLembretesHoje();atualizarBotaoNotif();}
+          else{localStorage.setItem('notif','off');atualizarBotaoNotif();}
         });
-      } else {
-        localStorage.setItem('notif','off');
-        atualizarBotaoNotif();
-      }
+      } else {localStorage.setItem('notif','off');atualizarBotaoNotif();}
     }, 1500);
   }
 }
@@ -967,7 +901,6 @@ function atualizarBotaoNotif(){
 initCal();initDom();buildSched();buildDomSel();renderMem();renderCal();
 adicionarBotaoNotificacao();
 pedirPermissaoNotificacao();
-// Verifica lembretes 3 segundos após carregar (aguarda Firebase carregar dados)
 setTimeout(verificarLembretesHoje, 3000);
 </script>
 </body>
